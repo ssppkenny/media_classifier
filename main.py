@@ -67,8 +67,10 @@ if __name__ == '__main__':
     filenames, Y,  bag = read_dir(dir_name)
     cls = prepare_data(filenames, Y, bag, dir_name)
 
-    file_name = "Java Programming Data.epub".lower()
-    prediction = predict(file_names, cls)
+    file_name1 = "Java Programming Data.epub".lower()
+    file_name2 = "Goodbye My Love.mp3".lower()
+    prediction = predict([file_name1, file_name2], cls, bag)
+    print(prediction)
 
 
 
