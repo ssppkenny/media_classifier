@@ -21,24 +21,38 @@ def read_dir(dir_name):
     Y = []
     tokenizer = nltk.RegexpTokenizer(r"\w+")
     bag_of_words = set([])
+    extensions = [".pdf", ".epub", ".mp3", ".flac", ".avi", ".mp4", ".mkv"]
     for root, subdirs, files in os.walk(dir_name):
         for f in files:
-            if f.endswith(".pdf") or f.endswith(".epub") or f.endswith(".mp3") or f.endswith(".flac"):
+            if any([f.endswith(x) for x in extensions]):
                 full_path = os.path.join(root, f)
+                to_classify = False
                 if full_path.startswith(dir_name + "/books"):
-                    Y.append(1)
-                else:
                     Y.append(0)
-                filenames.append(f.lower())
-                words = tokenizer.tokenize(f)
-                bag_of_words.update(words)
+                    to_classify = True
+                elif full_path.startswith(dir_name + "/music"):
+                    Y.append(1)
+                    to_classify = True
+                elif full_path.startswith(dir_name + "/Films"):
+                    Y.append(2)
+                    to_classify = True
+                elif full_path.startswith(dir_name + "/Audiobooks"):
+                    Y.append(3)
+                    to_classify = True
+                elif full_path.startswith(dir_name + "/Series"):
+                    Y.append(4)
+                    to_classify = True
+
+                if to_classify:
+                    filenames.append(f.lower())
+                    words = tokenizer.tokenize(f)
+                    bag_of_words.update(words)
 
     return filenames, Y, dict.fromkeys(bag_of_words,1)
 if __name__ == '__main__':
     dir_name = "/Users/sergey/Downloads/test"
     filenames, Y,  bag = read_dir(dir_name)
     X,Y = prepare_data(filenames, Y, bag, dir_name)
-
     cls = LogisticRegression(multi_class="multinomial")
     cls.fit(X,Y)
     
