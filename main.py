@@ -2,7 +2,7 @@ import numpy as np
 import nltk
 import os
 from sklearn.linear_model import LogisticRegression
-
+from sklearn.tree import DecisionTreeClassifier
 
 def prepare_data(filenames, Y, bag, dir_name):
     tokenizer = nltk.RegexpTokenizer(r"\w+")
@@ -15,7 +15,7 @@ def prepare_data(filenames, Y, bag, dir_name):
         words = tokenizer.tokenize(filenames[i])
         X[i,:] = np.array([int(b in words) for b in bag])
     
-    cls = LogisticRegression(multi_class="multinomial")
+    cls = DecisionTreeClassifier()
     cls.fit(X,Y)
     return cls
 
@@ -63,13 +63,18 @@ def predict(filenames, cls, bag):
     return cls.predict(X)
 
 if __name__ == '__main__':
-    dir_name = "/Users/sergey/Downloads/test"
+    dir_name = "/home/sergey/Downloads"
     filenames, Y,  bag = read_dir(dir_name)
     cls = prepare_data(filenames, Y, bag, dir_name)
 
     file_name1 = "Java Programming Data.epub".lower()
-    file_name2 = "Goodbye My Love.mp3".lower()
-    prediction = predict([file_name1, file_name2], cls, bag)
+    file_name2 = "02. Amadeus Liszt - Win The Race (12'' Version).mp3".lower()
+    file_name3 = "Coding Tricks and Tips March 2020.pdf".lower()
+    file_name4 = "01. Alan Brando - The Same Old Story (Extended Vocal Disco Mix).mp3"
+    file_name5 = "Happily.2021.1080p.WEBRip.x264-RARBG.mp4"
+    file_name6 = "Thundercloud.2015.1080p.AMZN.WEBRip.DDP5.1.x264-ISA.mkv"
+    prediction = predict([file_name1, file_name2, file_name3,
+        file_name4, file_name5, file_name6], cls, bag)
     print(prediction)
 
 
