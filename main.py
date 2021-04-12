@@ -14,7 +14,10 @@ def prepare_data(filenames, Y, bag, dir_name):
     for i in range(len(filenames)):
         words = tokenizer.tokenize(filenames[i])
         X[i,:] = np.array([int(b in words) for b in bag])
-    return X,Y
+    
+    cls = LogisticRegression(multi_class="multinomial")
+    cls.fit(X,Y)
+    return cls
 
 def read_dir(dir_name):
     filenames = []
@@ -49,21 +52,23 @@ def read_dir(dir_name):
                     bag_of_words.update(words)
 
     return filenames, Y, dict.fromkeys(bag_of_words,1)
+
+def predict(filenames, cls, bag):
+    tokenizer = nltk.RegexpTokenizer(r"\w+")
+    X = np.zeros((len(filenames), len(bag)))
+    for i in range(len(filenames)):
+        words = tokenizer.tokenize(filenames[i])
+        X[i,:] = np.array([int(b in words) for b in bag])
+
+    return cls.predict(X)
+
 if __name__ == '__main__':
     dir_name = "/Users/sergey/Downloads/test"
     filenames, Y,  bag = read_dir(dir_name)
-    X,Y = prepare_data(filenames, Y, bag, dir_name)
-    cls = LogisticRegression(multi_class="multinomial")
-    cls.fit(X,Y)
-    
+    cls = prepare_data(filenames, Y, bag, dir_name)
 
     file_name = "Java Programming Data.epub".lower()
-    tokenizer = nltk.RegexpTokenizer(r"\w+")
-    words = tokenizer.tokenize(file_name)
-    print(words)
-    x = np.array([int(b in words) for b in bag])
-
-    print(cls.predict(x.reshape(1,-1)))
+    prediction = predict(file_names, cls)
 
 
 
