@@ -1,6 +1,7 @@
 import numpy as np
 import nltk
 import os
+import pickle
 from sklearn.linear_model import LogisticRegression
 from sklearn.tree import DecisionTreeClassifier
 from joblib import dump, load
@@ -11,6 +12,7 @@ media_type = {0 : "books", 1 : "music", 2 : "Films", 3 : "Audiobooks", 4 : "Seri
 
 def prepare_data(filenames, Y, bag, from_files=True):
     path = os.path.expanduser('~/.cls.joblib')
+    bag_path = os.path.expanduser('~/.bag')
     if from_files:
         tokenizer = nltk.RegexpTokenizer(r"\w+")
         counter = 1
@@ -25,9 +27,14 @@ def prepare_data(filenames, Y, bag, from_files=True):
         cls = DecisionTreeClassifier()
         cls.fit(X,Y)
         dump(cls, path)
-        return cls
+        with open(bag_path, "wb") as f:
+            pickle.dump(bag, f)
+        return cls, bag
     else:
-        return load(path)
+        with open(bag_path, "rb") as f:
+            bag = pickle.load(f)
+
+        return load(path), bag
 
 def read_dir(dir_name):
     filenames = []
@@ -85,10 +92,10 @@ def predict(filenames, cls, bag):
 
 def classify(dir_name, cls, bag):
     files = [f for f in os.listdir(dir_name) if os.path.isfile(dir_name + "/" + f)]
-    dirs = [f for f in os.listdir(dir_name) if not os.path.isfile(dir_name + "/" + f)]
+    dirs = [f for f in os.listdir(dir_name) if not os.path.isfile(dir_name + "/" + f) and not f in media_type.values()]
+
 
     d1 = predict(files, cls, bag)
-    d2 = [predict_dir(dir_name + "/" + d, cls, bag) for d in dirs]
     d2 = dict([(d,predict_dir(dir_name + "/" + d, cls, bag)[dir_name + "/" + d]) for d in dirs])
     return {**d1, **d2}
         
@@ -96,7 +103,7 @@ def classify(dir_name, cls, bag):
 if __name__ == '__main__':
     dir_name = "/home/sergey/Downloads"
     filenames, Y,  bag = read_dir(dir_name)
-    cls = prepare_data(filenames, Y, bag)
+    cls, bag = prepare_data(filenames, Y, bag, from_files=False)
 
     prediction = classify(dir_name, cls, bag)
     for k, v in prediction.items():
