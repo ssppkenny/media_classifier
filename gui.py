@@ -30,7 +30,6 @@ class ComboBoxWindow(Gtk.Window):
             hbox = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=1, homogeneous=True)
 
             type_combo = Gtk.ComboBox.new_with_model_and_entry(combobox_values)
-            type_combo.connect("changed", self.on_name_combo_changed)
             type_combo.set_entry_text_column(1)
             classify.media_type.values()
             type_combo.set_active(inv_media_type[v])
@@ -49,8 +48,11 @@ class ComboBoxWindow(Gtk.Window):
         button.set_size_request(200, 40)
         button.connect("clicked", self.on_button_clicked)
         hbox.pack_start(button, False, False, 0)
-        vbox.pack_start(hbox, False, False, 0)
-        self.add(vbox)
+        vbox.pack_start(hbox, True, True, 0)
+        scrolled_window = Gtk.ScrolledWindow()
+        scrolled_window.add(vbox)
+        self.add(scrolled_window)
+        self.set_size_request(500,500)
 
     def on_button_clicked(self, button):
         inv_media_type = {v: k for k, v in classify.media_type.items()}
