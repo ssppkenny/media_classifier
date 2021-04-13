@@ -6,6 +6,7 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.tree import DecisionTreeClassifier
 from joblib import dump, load
 from collections import Counter
+import sys
 
 extensions = [".pdf", ".epub", ".mp3", ".flac", ".avi", ".mp4", ".mkv"]
 media_type = {0 : "books", 1 : "music", 2 : "Films", 3 : "Audiobooks", 4 : "Series", 5: "Files"}
@@ -91,9 +92,11 @@ def predict(filenames, cls, bag):
     return dict((k,media_type[v]) for (k,v) in d.items())
 
 def classify(dir_name, cls, bag):
-    files = [f for f in os.listdir(dir_name) if os.path.isfile(dir_name + "/" + f)]
-    dirs = [f for f in os.listdir(dir_name) if not os.path.isfile(dir_name + "/" + f) and not f in media_type.values()]
-
+    def condition(f):
+        fn, ext = os.path.splitext(f)
+        return ext in extensions 
+    files = [f for f in os.listdir(dir_name) if not f.startswith(".") and not f.startswith("$") and os.path.isfile(dir_name + "/" + f) and condition(dir_name + "/" + f)]
+    dirs = [f for f in os.listdir(dir_name) if not f.startswith(".") and not f.startswith("$") and not os.path.isfile(dir_name + "/" + f) and not f in media_type.values()]
 
     d1 = predict(files, cls, bag)
     d2 = dict([(d,predict_dir(dir_name + "/" + d, cls, bag)[dir_name + "/" + d]) for d in dirs])
@@ -101,13 +104,14 @@ def classify(dir_name, cls, bag):
         
 
 if __name__ == '__main__':
-    dir_name = "/home/sergey/Downloads"
-    filenames, Y,  bag = read_dir(dir_name)
-    cls, bag = prepare_data(filenames, Y, bag, from_files=False)
+    if len(sys.argv) > 1:
+        dir_name = sys.argv[1]; ##"/home/sergey/Downloads"
+        filenames, Y,  bag = read_dir(dir_name)
+        cls, bag = prepare_data(filenames, Y, bag, from_files=False)
 
-    prediction = classify(dir_name, cls, bag)
-    for k, v in prediction.items():
-        print(k,v)
+        prediction = classify(dir_name, cls, bag)
+        for k, v in prediction.items():
+            print(k,v)
 
 
 
