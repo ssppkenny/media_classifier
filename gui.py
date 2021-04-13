@@ -20,6 +20,7 @@ class ComboBoxWindow(Gtk.Window):
 
         vbox = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=1)
         self.elements = []
+        hboxes = []
         inv_media_type = {v: k for k, v in classify.media_type.items()}
         for k, v in prediction.items():
             combobox_values = Gtk.ListStore(int, str)
@@ -40,6 +41,7 @@ class ComboBoxWindow(Gtk.Window):
             hbox.pack_start(label, False, False, True)
             hbox.pack_start(type_combo, False, False, 0)
             vbox.pack_start(hbox, False, False, 0)
+            hboxes.append(hbox)
             self.elements.append((label, type_combo))
 
 
@@ -52,7 +54,14 @@ class ComboBoxWindow(Gtk.Window):
         scrolled_window = Gtk.ScrolledWindow()
         scrolled_window.add(vbox)
         self.add(scrolled_window)
-        self.set_size_request(500,500)
+        total_height = 0
+        total_width = 0
+        for hbox in hboxes:
+            for ch in hbox.get_children():
+                a = ch.get_allocation()
+                total_height += a.height*20
+                total_width += a.width*35
+        self.set_size_request(total_width,total_height)
 
     def on_button_clicked(self, button):
         inv_media_type = {v: k for k, v in classify.media_type.items()}
