@@ -7,7 +7,7 @@ gi.require_version("Gtk", "3.0")
 from gi.repository import Gtk
 
 
-class ComboBoxWindow(Gtk.Window):
+class ComboBoxWindow(Gtk.ApplicationWindow):
     def __init__(self):
         Gtk.Window.__init__(self, title="Downloaded Files Classifier")
         self.dir_name = os.path.expanduser("~/" + "Downloads")
@@ -15,9 +15,11 @@ class ComboBoxWindow(Gtk.Window):
         cls, bag = classify.prepare_data(filenames, Y, bag, from_files=False)
         prediction = classify.classify(self.dir_name, cls, bag)
 
+        prediction = dict([(x, prediction[x]) for x in sorted(prediction.keys())])
 
+        print(dir(self))
         self.set_border_width(10)
-
+        #self.set_size_request(800,300)
         vbox = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=1)
         self.elements = []
         hboxes = []
@@ -51,17 +53,18 @@ class ComboBoxWindow(Gtk.Window):
         button.connect("clicked", self.on_button_clicked)
         hbox.pack_start(button, False, False, 0)
         vbox.pack_start(hbox, True, True, 0)
-        scrolled_window = Gtk.ScrolledWindow()
+        scrolled_window = Gtk.ScrolledWindow.new (None, None)
+        scrolled_window.set_policy(Gtk.PolicyType.NEVER,
+                                Gtk.PolicyType.NEVER)
         scrolled_window.add(vbox)
         self.add(scrolled_window)
-        total_height = 0
-        total_width = 0
-        for hbox in hboxes:
-            for ch in hbox.get_children():
-                a = ch.get_allocation()
-                total_height += a.height*20
-                total_width += a.width*35
-        self.set_size_request(total_width,total_height)
+        #for hbox in hboxes:
+        #    print(dir(hbox.get_visual()))
+        #    for ch in hbox.get_children():
+        #        a = ch.get_allocation()
+        #        total_height += a.height*20
+        #        total_width += a.width*25
+        #self.set_size_request(total_width,total_height)
 
     def on_button_clicked(self, button):
         inv_media_type = {v: k for k, v in classify.media_type.items()}
