@@ -13,8 +13,10 @@ def move_files():
 
 window = tk.Tk()
 window.title('Classify')
-window.geometry('700x550')
+window.geometry('800x550')
 
+frame_main = tk.Frame(window, bg="gray")
+frame_main.grid(sticky='news')
 
 dir_name = os.path.expanduser("~/" + "Downloads")
 
@@ -26,9 +28,27 @@ prediction = classify.classify(dir_name, cls, bag)
 #for k, v in prediction.items():
 #    print(k,v)
 
-i = 1
+i = 0
 inv_media_type = {v: k for k, v in classify.media_type.items()}
 
+frame_canvas = tk.Frame(frame_main)
+frame_canvas.grid(row=1, column=0, pady=(0, 0), sticky='nw')
+frame_canvas.grid_rowconfigure(0, weight=1)
+frame_canvas.grid_columnconfigure(0, weight=1)
+# Set grid_propagate to False to allow 5-by-5 buttons resizing later
+frame_canvas.grid_propagate(False)
+
+# Add a canvas in that frame
+canvas = tk.Canvas(frame_canvas, bg="grey")
+canvas.grid(row=0, column=0, sticky="news")
+
+vsb = tk.Scrollbar(frame_canvas, orient="vertical", command=canvas.yview)
+vsb.grid(row=0, column=1, sticky='ns')
+canvas.configure(yscrollcommand=vsb.set)
+
+# Create a frame to contain the buttons
+frame_buttons = tk.Frame(canvas, bg="blue")
+canvas.create_window((0, 0), window=frame_buttons, anchor='nw')
 
 string_vars = []
 lables = []
@@ -36,17 +56,19 @@ comboboxes = []
 for k,v in prediction.items():
     n = tk.StringVar()
     string_vars.append(n)
-    label = ttk.Label(window, text=k)
-    label.grid(column = 2, row = i)
+    label = ttk.Label(frame_buttons, text=k)
+    label.grid(column = 0, row = i, sticky="news")
     lables.append(label)
-    filechosen = ttk.Combobox(window, width=30, textvariable=n)
+    filechosen = ttk.Combobox(frame_buttons, width=30, textvariable=n)
     filechosen['values'] = tuple(classify.media_type.values())
-    filechosen.grid(column = 1, row = i)
+    filechosen.grid(column = 1, row = i, sticky="news")
     ind = inv_media_type[v]
     filechosen.current(ind)
     comboboxes.append(filechosen)
     i += 1
 
+frame_canvas.config(width=800 + vsb.winfo_width(),
+                    height=400)
 
 elements = []
 i = 1
@@ -57,10 +79,17 @@ for k, v in prediction.items():
     i += 1
     elements.append((label, n))
 
+# Set the canvas scrolling region
 
-button = ttk.Button(window, text="Move Files", command=move_files)
-button.grid(column=1, row=i+5)
 
+button = ttk.Button(frame_main, text="Move Files", command=move_files)
+button.grid(column=1, row=i)
+
+# Link a scrollbar to the canvas
+vsb = tk.Scrollbar(frame_canvas, orient="vertical", command=canvas.yview)
+vsb.grid(row=0, column=1, sticky='ns')
+canvas.configure(yscrollcommand=vsb.set)
+canvas.config(scrollregion=canvas.bbox("all"))
 
 
 window.mainloop()
