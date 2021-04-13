@@ -1,101 +1,65 @@
-import tkinter as tk
-from tkinter import ttk
-import getpass
-import os
+import shutil
+import gi
 import classify
+import os
 
-def move_files():
-    for k,v in elements:
-        subfolder = k.cget("text")
-        file = v.get()
-        print(f"moving {file} to {subfolder}")
+gi.require_version("Gtk", "3.0")
+from gi.repository import Gtk
 
 
-window = tk.Tk()
-window.title('Classify')
-window.geometry('800x550')
-
-frame_main = tk.Frame(window, bg="gray")
-frame_main.grid(sticky='news')
-
-dir_name = os.path.expanduser("~/" + "Downloads")
-
-
-filenames, Y,  bag = classify.read_dir(dir_name)
-cls, bag = classify.prepare_data(filenames, Y, bag, from_files=False)
-
-prediction = classify.classify(dir_name, cls, bag)
-#for k, v in prediction.items():
-#    print(k,v)
-
-i = 0
-inv_media_type = {v: k for k, v in classify.media_type.items()}
-
-frame_canvas = tk.Frame(frame_main)
-frame_canvas.grid(row=1, column=0, pady=(0, 0), sticky='nw')
-frame_canvas.grid_rowconfigure(0, weight=1)
-frame_canvas.grid_columnconfigure(0, weight=1)
-# Set grid_propagate to False to allow 5-by-5 buttons resizing later
-frame_canvas.grid_propagate(False)
-
-# Add a canvas in that frame
-canvas = tk.Canvas(frame_canvas, bg="grey")
-canvas.grid(row=0, column=0, sticky="news")
-
-vsb = tk.Scrollbar(frame_canvas, orient="vertical", command=canvas.yview)
-vsb.grid(row=0, column=1, sticky='ns')
-canvas.configure(yscrollcommand=vsb.set)
-
-# Create a frame to contain the buttons
-frame_buttons = tk.Frame(canvas, bg="grey")
-canvas.create_window((0, 0), window=frame_buttons, anchor='nw')
-
-string_vars = []
-lables = []
-comboboxes = []
-for k,v in prediction.items():
-    n = tk.StringVar()
-    string_vars.append(n)
-    label = ttk.Label(frame_buttons, text=k)
-    label.grid(column = 0, row = i)
-    lables.append(label)
-    filechosen = ttk.Combobox(frame_buttons, width=30, textvariable=n)
-    filechosen['values'] = tuple(classify.media_type.values())
-    filechosen.grid(column = 1, row = i)
-    ind = inv_media_type[v]
-    filechosen.current(ind)
-    comboboxes.append(filechosen)
-    i += 1
-
-frame_canvas.config(width=800 + vsb.winfo_width(),
-                    height=400)
-
-elements = []
-i = 1
-for k, v in prediction.items():
-    n = string_vars[i-1] 
-    label = lables[i-1]
-    combobox = comboboxes[i-1]
-    i += 1
-    elements.append((label, n))
-
-# Set the canvas scrolling region
+class ComboBoxWindow(Gtk.Window):
+    def __init__(self):
+        Gtk.Window.__init__(self, title="Downloaded Files Classifier")
+        self.dir_name = os.path.expanduser("~/" + "Downloads")
+        filenames, Y,  bag = classify.read_dir(self.dir_name)
+        cls, bag = classify.prepare_data(filenames, Y, bag, from_files=False)
+        prediction = classify.classify(self.dir_name, cls, bag)
 
 
-button = ttk.Button(frame_main, text="Move Files", command=move_files)
-button.grid(column=0, row=i)
+        self.set_border_width(10)
 
-# Link a scrollbar to the canvas
-vsb = tk.Scrollbar(frame_canvas, orient="vertical", command=canvas.yview)
-vsb.grid(row=0, column=1, sticky='ns')
-canvas.configure(yscrollcommand=vsb.set)
-canvas.config(scrollregion=canvas.bbox("all"))
+        vbox = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=1)
+        self.elements = []
+        inv_media_type = {v: k for k, v in classify.media_type.items()}
+        for k, v in prediction.items():
+            combobox_values = Gtk.ListStore(int, str)
+
+            for i, val in enumerate(classify.media_type.values()):
+                combobox_values.append([i, val])
+
+            hbox = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=1, homogeneous=True)
+
+            type_combo = Gtk.ComboBox.new_with_model_and_entry(combobox_values)
+            type_combo.connect("changed", self.on_name_combo_changed)
+            type_combo.set_entry_text_column(1)
+            classify.media_type.values()
+            type_combo.set_active(inv_media_type[v])
 
 
-window.mainloop()
+            label = Gtk.Label.new(k)
+            label.set_selectable(True)
+            hbox.pack_start(label, False, False, True)
+            hbox.pack_start(type_combo, False, False, 0)
+            vbox.pack_start(hbox, False, False, 0)
+            self.elements.append((label, type_combo))
 
 
+        hbox = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=1, homogeneous=True)
+        button = Gtk.Button("Move Files")
+        button.set_size_request(200, 40)
+        button.connect("clicked", self.on_button_clicked)
+        hbox.pack_start(button, False, False, 0)
+        vbox.pack_start(hbox, False, False, 0)
+        self.add(vbox)
+
+    def on_button_clicked(self, button):
+        inv_media_type = {v: k for k, v in classify.media_type.items()}
+        for name, folder in self.elements:
+            target_folder = classify.media_type[folder.get_active()]
+            shutil.move(os.path.join(self.dir_name, name.get_text()), os.path.join(self.dir_name, target_folder))
 
 
-
-
+win = ComboBoxWindow()
+win.connect("destroy", Gtk.main_quit)
+win.show_all()
+Gtk.main()
