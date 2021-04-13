@@ -47,7 +47,7 @@ vsb.grid(row=0, column=1, sticky='ns')
 canvas.configure(yscrollcommand=vsb.set)
 
 # Create a frame to contain the buttons
-frame_buttons = tk.Frame(canvas, bg="blue")
+frame_buttons = tk.Frame(canvas, bg="grey")
 canvas.create_window((0, 0), window=frame_buttons, anchor='nw')
 
 string_vars = []
@@ -57,11 +57,11 @@ for k,v in prediction.items():
     n = tk.StringVar()
     string_vars.append(n)
     label = ttk.Label(frame_buttons, text=k)
-    label.grid(column = 0, row = i, sticky="news")
+    label.grid(column = 0, row = i)
     lables.append(label)
     filechosen = ttk.Combobox(frame_buttons, width=30, textvariable=n)
     filechosen['values'] = tuple(classify.media_type.values())
-    filechosen.grid(column = 1, row = i, sticky="news")
+    filechosen.grid(column = 1, row = i)
     ind = inv_media_type[v]
     filechosen.current(ind)
     comboboxes.append(filechosen)
@@ -83,7 +83,7 @@ for k, v in prediction.items():
 
 
 button = ttk.Button(frame_main, text="Move Files", command=move_files)
-button.grid(column=1, row=i)
+button.grid(column=0, row=i)
 
 # Link a scrollbar to the canvas
 vsb = tk.Scrollbar(frame_canvas, orient="vertical", command=canvas.yview)
