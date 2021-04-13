@@ -7,9 +7,10 @@ from joblib import dump, load
 from collections import Counter
 
 extensions = [".pdf", ".epub", ".mp3", ".flac", ".avi", ".mp4", ".mkv"]
-media_type = {0 : "books", 1 : "music", 2 : "Films", 3 : "Audiobooks", 4 : "Series"}
+media_type = {0 : "books", 1 : "music", 2 : "Films", 3 : "Audiobooks", 4 : "Series", 5: "Files"}
 
 def prepare_data(filenames, Y, bag, from_files=True):
+    path = os.path.expanduser('~/.cls.joblib')
     if from_files:
         tokenizer = nltk.RegexpTokenizer(r"\w+")
         counter = 1
@@ -23,10 +24,10 @@ def prepare_data(filenames, Y, bag, from_files=True):
         
         cls = DecisionTreeClassifier()
         cls.fit(X,Y)
-        dump(cls, '~/.cls.joblib') 
+        dump(cls, path)
         return cls
     else:
-        load('~/.cls.joblib')
+        return load(path)
 
 def read_dir(dir_name):
     filenames = []
@@ -63,13 +64,14 @@ def read_dir(dir_name):
 
 
 def predict_dir(dir_name, cls, bag):
+    filenames = []
     for root, subdirs, files in os.walk(dir_name):
-        filenames = []
         for f in files:
-            if any([f.endswith(x) for x in extensions]):
                 filenames.append(f)
-
-    return {dir_name : media_type[Counter(predict(filenames, cls, bag)).most_common()[0][0]]}
+    new_filenames = list(filter(lambda x: any([x.endswith(y) for y in extensions]), filenames))
+    if not new_filenames:
+        return {dir_name : "Files"}
+    return {dir_name : Counter(predict(new_filenames, cls, bag)).most_common()[0][1]}
 
 def predict(filenames, cls, bag):
     tokenizer = nltk.RegexpTokenizer(r"\w+")
@@ -82,11 +84,12 @@ def predict(filenames, cls, bag):
     return dict((k,media_type[v]) for (k,v) in d.items())
 
 def classify(dir_name, cls, bag):
-    files = [f for f in os.listdir('.') if os.path.isfile(f)]
-    dirs = [f for f in os.listdir('.') if not os.path.isfile(f)]
+    files = [f for f in os.listdir(dir_name) if os.path.isfile(dir_name + "/" + f)]
+    dirs = [f for f in os.listdir(dir_name) if not os.path.isfile(dir_name + "/" + f)]
 
     d1 = predict(files, cls, bag)
-    d2 = dict([(d,predict_dir(d, cls, bag)[d]) for d in dirs])
+    d2 = [predict_dir(dir_name + "/" + d, cls, bag) for d in dirs]
+    d2 = dict([(d,predict_dir(dir_name + "/" + d, cls, bag)[dir_name + "/" + d]) for d in dirs])
     return {**d1, **d2}
         
 
@@ -96,7 +99,8 @@ if __name__ == '__main__':
     cls = prepare_data(filenames, Y, bag)
 
     prediction = classify(dir_name, cls, bag)
-    print(prediction)
+    for k, v in prediction.items():
+        print(k,v)
 
 
 
