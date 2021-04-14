@@ -17,9 +17,8 @@ class ComboBoxWindow(Gtk.ApplicationWindow):
 
         prediction = dict([(x, prediction[x]) for x in sorted(prediction.keys())])
 
-        print(dir(self))
         self.set_border_width(10)
-        #self.set_size_request(800,300)
+        self.set_size_request(800,300)
         vbox = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=1)
         self.elements = []
         hboxes = []
@@ -55,16 +54,19 @@ class ComboBoxWindow(Gtk.ApplicationWindow):
         vbox.pack_start(hbox, True, True, 0)
         scrolled_window = Gtk.ScrolledWindow.new (None, None)
         scrolled_window.set_policy(Gtk.PolicyType.NEVER,
-                                Gtk.PolicyType.NEVER)
+                                Gtk.PolicyType.ALWAYS)
+        #vbox.add(scrolled_window)
         scrolled_window.add(vbox)
         self.add(scrolled_window)
+        #height = self.get_screen().get_height()
+        #width = self.get_screen().get_width()
         #for hbox in hboxes:
         #    print(dir(hbox.get_visual()))
         #    for ch in hbox.get_children():
         #        a = ch.get_allocation()
         #        total_height += a.height*20
         #        total_width += a.width*25
-        #self.set_size_request(total_width,total_height)
+        #self.set_size_request(-1,-1)
 
     def on_button_clicked(self, button):
         inv_media_type = {v: k for k, v in classify.media_type.items()}
